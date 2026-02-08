@@ -1,0 +1,21 @@
+@echo off
+echo Kohinoor Power Solutions - Customer Management System
+echo ===================================================
+echo.
+echo 1. Download from GitHub:
+echo    git clone https://github.com/bushra2004/customer-management-system.git
+echo.
+echo 2. Install dependencies:
+echo    pip install -r requirements.txt
+echo.
+echo 3. Run the application:
+echo    python app.py
+echo.
+echo 4. Open browser and go to:
+echo    http://localhost:5001
+echo.
+echo 5. Login credentials:
+echo    Username: admin
+echo    Password: admin123
+echo.
+pause
