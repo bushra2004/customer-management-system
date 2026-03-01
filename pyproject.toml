@@ -1,0 +1,11 @@
+[project]
+name = "customer-management-system"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "flask==2.3.3",
+    "flask-login==0.6.2",
+    "pandas==2.0.3",
+    "openpyxl==3.1.2",
+    "werkzeug==2.3.7"
+]
