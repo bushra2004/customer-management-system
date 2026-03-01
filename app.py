@@ -67,14 +67,17 @@ def get_db_connection():
     Get database connection using Vercel PostgreSQL environment variables
     """
     try:
-        # First try to get the database URL from environment
+        # Log that we're using PostgreSQL (not SQLite)
+        logger.info("Attempting PostgreSQL connection...")
+        
+        # Get database URL from environment
         database_url = os.environ.get('POSTGRES_URL')
         
         if not database_url:
             database_url = os.environ.get('DATABASE_URL')
             
         if not database_url:
-            # Construct from individual PostgreSQL variables
+            # Construct from individual variables
             user = os.environ.get('POSTGRES_USER')
             password = os.environ.get('POSTGRES_PASSWORD')
             host = os.environ.get('POSTGRES_HOST')
@@ -84,16 +87,14 @@ def get_db_connection():
                 database_url = f"postgresql://{user}:{password}@{host}/{database}?sslmode=require"
         
         if not database_url:
-            error_msg = "No database connection string found"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+            logger.error("No database connection string found")
+            raise ValueError("Database connection string not configured")
         
-        logger.info(f"Connecting to PostgreSQL database")
-        
-        # Use psycopg2 for PostgreSQL, NOT sqlite3!
+        # Connect to PostgreSQL (NOT SQLite)
+        logger.info(f"Connecting to PostgreSQL at: {host if 'host' in locals() else 'using URL'}")
         conn = psycopg2.connect(database_url, connect_timeout=10)
         conn.cursor_factory = RealDictCursor
-        logger.info("✅ PostgreSQL connection established")
+        logger.info("✅ PostgreSQL connection successful")
         return conn
         
     except Exception as e:
