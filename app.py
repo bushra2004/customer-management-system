@@ -67,16 +67,14 @@ def get_db_connection():
     Get database connection using Vercel PostgreSQL environment variables
     """
     try:
-        # Check environment variables first
-        logger.debug("Checking for POSTGRES_URL...")
+        # First try to get the database URL from environment
         database_url = os.environ.get('POSTGRES_URL')
         
         if not database_url:
-            logger.debug("POSTGRES_URL not found, trying DATABASE_URL...")
             database_url = os.environ.get('DATABASE_URL')
-        
+            
         if not database_url:
-            logger.debug("Constructing from individual variables...")
+            # Construct from individual PostgreSQL variables
             user = os.environ.get('POSTGRES_USER')
             password = os.environ.get('POSTGRES_PASSWORD')
             host = os.environ.get('POSTGRES_HOST')
@@ -84,81 +82,23 @@ def get_db_connection():
             
             if all([user, password, host, database]):
                 database_url = f"postgresql://{user}:{password}@{host}/{database}?sslmode=require"
-                logger.debug(f"Constructed URL with host: {host}")
         
         if not database_url:
-            error_msg = "No database connection string found in environment variables"
+            error_msg = "No database connection string found"
             logger.error(error_msg)
-            logger.error(f"Available env vars: {[k for k in os.environ.keys() if 'POSTGRES' in k]}")
             raise ValueError(error_msg)
         
-        # Log connection attempt (hide password)
-        safe_url = database_url.split('@')[-1] if '@' in database_url else 'using URL'
-        logger.info(f"Connecting to database at: {safe_url}")
+        logger.info(f"Connecting to PostgreSQL database")
         
-        # Connect with timeout
-        conn = psycopg2.connect(
-            database_url,
-            connect_timeout=10,
-            sslmode='require'
-        )
-        
-        # Return dictionary-like rows
+        # Use psycopg2 for PostgreSQL, NOT sqlite3!
+        conn = psycopg2.connect(database_url, connect_timeout=10)
         conn.cursor_factory = RealDictCursor
-        logger.info("✅ Database connection established")
+        logger.info("✅ PostgreSQL connection established")
         return conn
         
-    except psycopg2.OperationalError as e:
-        logger.error(f"Database operational error: {e}")
-        raise
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
         raise
-
-def init_database():
-    """
-    Initialize database tables
-    """
-    conn = None
-    try:
-        logger.info("Initializing database...")
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        # Create customers table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS customers (
-                id SERIAL PRIMARY KEY,
-                serial_no INTEGER NOT NULL,
-                customer_id VARCHAR(50) UNIQUE NOT NULL,
-                customer_name VARCHAR(200) NOT NULL,
-                product VARCHAR(100) NOT NULL,
-                date DATE NOT NULL,
-                contact VARCHAR(50) NOT NULL,
-                city VARCHAR(100) NOT NULL,
-                amount DECIMAL(10,2) NOT NULL,
-                purchase_confirmed BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Create index for faster searches
-        cur.execute('''
-            CREATE INDEX IF NOT EXISTS idx_customer_search 
-            ON customers(customer_id, customer_name, product, city)
-        ''')
-        
-        conn.commit()
-        cur.close()
-        logger.info("✅ Database initialized successfully!")
-        
-    except Exception as e:
-        logger.error(f"Database initialization failed: {e}")
-        raise
-    finally:
-        if conn:
-            conn.close()
-
 # ============================================================================
 # TEST DATABASE ON STARTUP
 # ============================================================================
